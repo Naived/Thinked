@@ -9,21 +9,26 @@ import SignUpPage from './components/SignUpPage.jsx';
 import AdminDashboardPage from './components/DashboardPage.jsx'; 
 import TablesPage from './components/TablesPage.jsx';
 import QuizEditPage from './components/QuizEditPage.jsx';
+import QuizTopicsPage from './components/QuizTopicPage.jsx';
+import QuizAIPage from './components/QuizAIPage.jsx';
+import QuizMachineLearningPage from './components/QuizMachineLearningPage.jsx'; 
 import ProfilePage from './components/ProfilePage.jsx';
 import StudentDashboardPage from './components/StudentDashboard.jsx';
 import MateriPage from './components/MateriPage.jsx';
 import StudentNavbar from './components/StudentNavbar';
 import PengenalanAiPage from './components/PengenalanAiPage.jsx';
+import MachineLearningPage from './components/MachineLearningPage.jsx';
+import NaturalLanguageProcessing from './components/NLPPage.jsx';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  apiKey: "AIzaSyArVxJnP_VDeRFzurUCUSPIqTeGZ_ZJD_U",
-  authDomain: "thinked-fbe4c.firebaseapp.com",
-  projectId: "thinked-fbe4c",
-  storageBucket: "thinked-fbe4c.appspot.com",
-  messagingSenderId: "135108441630",
-  appId: "1:135108441630:web:6eb0283d257901d92ba00f",
-  measurementId: "G-QSJ99GP9TC"
+  apiKey: "AIzaSyDRrjPh-ZDZueS50RWj4OCL_W7hGq0Dmb8",
+  authDomain: "thinked-9004f.firebaseapp.com",
+  projectId: "thinked-9004f",
+  storageBucket: "thinked-9004f.firebasestorage.app",
+  messagingSenderId: "10637562537",
+  appId: "1:10637562537:web:b12f68891efee30e984fb8",
+  measurementId: "G-QMGMY05251"
 };
 
 // Initialize Firebase
@@ -103,10 +108,26 @@ export default function App() {
       let content;
       switch(studentPage) {
           case 'materi':
-              content = <MateriPage />;
+            content = <MateriPage setStudentPage={setStudentPage} />;
               break;
           case 'pengenalan-ai':
               content = <PengenalanAiPage />;
+              break;
+            case 'quiz': // Ketika studentPage adalah 'quiz' (dari navbar)
+              content = <QuizTopicsPage setStudentPage={setStudentPage} />; // Render komponen pilihan topik quiz Anda
+              break;
+          // >>> AKHIR TAMBAHAN <<<
+            case 'quiz-ai-intro': // Untuk quiz spesifik Pengenalan AI
+          content = <QuizAIPage setStudentPage={setStudentPage} db={db}/>; // Atau komponen QuizAIPage
+              break;
+            case 'quiz-machine-learning': // <-- Tambahkan case ini
+              content = <QuizMachineLearningPage setStudentPage={setStudentPage} db={db} />; // <-- Dan ini
+              break;
+            case 'machine-learning':
+              content = <MachineLearningPage/>
+              break;
+              case 'nlp':
+              content = <NaturalLanguageProcessing/>;
               break;
           case 'dashboard':
           default:
