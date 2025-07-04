@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth';
 import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { Analytics } from "@vercel/analytics/next"
 
 // Import the component files
 import LoginPage from './components/LoginPage.jsx';
