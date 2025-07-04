@@ -10,7 +10,7 @@ import AdminDashboardPage from './components/DashboardPage.jsx';
 import TablesPage from './components/TablesPage.jsx';
 import QuizEditPage from './components/QuizEditPage.jsx';
 import QuizTopicsPage from './components/QuizTopicPage.jsx';
-import QuizAIPage from './components/QuizAiPage.jsx';
+import QuizAiPage from './components/QuizAiPage.jsx';
 import QuizMachineLearningPage from './components/QuizMachineLearningPage.jsx'; 
 import ProfilePage from './components/ProfilePage.jsx';
 import StudentDashboardPage from './components/StudentDashboard.jsx';
@@ -22,14 +22,14 @@ import NaturalLanguageProcessing from './components/NLPPage.jsx';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
-  apiKey: "AIzaSyDRrjPh-ZDZueS50RWj4OCL_W7hGq0Dmb8",
-  authDomain: "thinked-9004f.firebaseapp.com",
-  projectId: "thinked-9004f",
-  storageBucket: "thinked-9004f.firebasestorage.app",
-  messagingSenderId: "10637562537",
-  appId: "1:10637562537:web:b12f68891efee30e984fb8",
-  measurementId: "G-QMGMY05251"
-};
+    apiKey: "AIzaSyDRrjPh-ZDZueS50RWj4OCL_W7hGq0Dmb8",
+    authDomain: "thinked-9004f.firebaseapp.com",
+    projectId: "thinked-9004f",
+    storageBucket: "thinked-9004f.firebasestorage.app",
+    messagingSenderId: "10637562537",
+    appId: "1:10637562537:web:b12f68891efee30e984fb8",
+    measurementId: "G-QMGMY05251"
+  }
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
@@ -118,7 +118,7 @@ export default function App() {
               break;
           // >>> AKHIR TAMBAHAN <<<
             case 'quiz-ai-intro': // Untuk quiz spesifik Pengenalan AI
-          content = <QuizAIPage setStudentPage={setStudentPage} db={db}/>; // Atau komponen QuizAIPage
+          content = <QuizAiPage setStudentPage={setStudentPage} db={db}/>; // Atau komponen QuizAIPage
               break;
             case 'quiz-machine-learning': // <-- Tambahkan case ini
               content = <QuizMachineLearningPage setStudentPage={setStudentPage} db={db} />; // <-- Dan ini

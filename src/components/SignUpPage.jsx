@@ -96,7 +96,10 @@ export default function SignUpPage({ setPage }) {
         username: username,
         email: user.email,
         role: 'student', // Always register as a student
-        score: 0
+        score: 0,
+        TotalScoreSum:0,
+        learningProgress:0,
+        totalQuizzesCompleted:0,
       });
       // The onAuthStateChanged listener in App.jsx will handle navigation
     } catch (err) {

@@ -42,7 +42,7 @@ export default function DashboardPage() {
         const fetchDashboardData = async () => {
             const db = getFirestore();
             const usersCollectionRef = collection(db, "users");
-
+            
             // --- Fetch Stats ---
             const userSnapshot = await getDocs(usersCollectionRef);
             const totalUsers = userSnapshot.size;
@@ -63,6 +63,7 @@ export default function DashboardPage() {
             // --- Fetch Leaderboard ---
             const leaderboardQuery = query(
                 usersCollectionRef, 
+                where("role", "==", "student"),
                 orderBy("score", "desc"), 
                 limit(10)
             );

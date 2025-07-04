@@ -23,35 +23,48 @@ export default function StudentDashboardPage({ userData }) {
 
         const fetchLeaderboard = async () => {
             const usersCollectionRef = collection(db, "users");
-            const q = query(usersCollectionRef, orderBy("score", "desc"), limit(10));
-            const querySnapshot = await getDocs(q);
-            const leaderboardData = querySnapshot.docs.map(doc => doc.data());
-            setLeaderboard(leaderboardData);
+            // Asumsi field 'score' di dokumen users adalah rata-rata skor atau skor yang digunakan untuk peringkat
+            const q = query(usersCollectionRef, where("role", "==", "student"), orderBy("score", "desc"), limit(10)); 
+            try {
+                const querySnapshot = await getDocs(q);
+                // Pastikan 'score' ada di setiap user jika tidak, default ke 0
+                const leaderboardData = querySnapshot.docs.map(doc => ({ 
+                    id: doc.id, 
+                    ...doc.data(),
+                    score: doc.data().score || 0 // Pastikan score selalu ada
+                }));
+                setLeaderboard(leaderboardData);
+            } catch (err) {
+                console.error("Error fetching leaderboard:", err);
+            }
         };
 
         const fetchUserStats = async () => {
-            if (!userData?.uid) return;
-            const attemptsRef = collection(db, "quizAttempts");
-            const q = query(attemptsRef, where("userId", "==", userData.uid));
-            const querySnapshot = await getDocs(q);
-            const attempts = querySnapshot.docs.map(doc => doc.data());
-            const totalQuizzes = attempts.length;
-            let averageScore = 0;
-            if (totalQuizzes > 0) {
-                const totalScore = attempts.reduce((sum, attempt) => sum + (attempt.score || 0), 0);
-                averageScore = Math.round(totalScore / totalQuizzes);
+            if (!userData) { // Cek apakah userData ada
+                // console.log("userData not available, skipping fetchUserStats"); // Debugging
+                return;
             }
-            const learningProgress = totalQuizzes * 5; // Example logic
+
+            const totalQuizzes = userData.totalQuizzesCompleted || 0;
+            const learningProgress = userData.learningProgress || 0; // Mengambil learningProgress dari Firestore
+
+            const averageScore = userData.score || 0;
+
             setStats({
-                totalQuizzes,
-                averageScore,
-                learningProgress: Math.min(100, learningProgress)
+                totalQuizzes: totalQuizzes,
+                // averageScore: averageScore, // Jika Anda akan menyimpan averageScore di Firestore, gunakan yang ini
+                averageScore: averageScore, // Prefer averageScore dari Firestore jika sudah ada
+                                                                  // Jika belum ada di Firestore, hitung dari TotalScoreSum
+                learningProgress: learningProgress // Ambil langsung dari Firestore
             });
         };
 
         const fetchAllData = async () => {
             setIsLoading(true);
-            await Promise.all([fetchLeaderboard(), fetchUserStats()]);
+            // Promise.all untuk fetchLeaderboard dan memastikan fetchUserStats dari props setelah userData tersedia
+            // fetchUserStats sekarang tidak async karena dia tidak lagi query Firestore
+            await Promise.all([fetchLeaderboard()]); 
+            fetchUserStats(); // Panggil ini setelah fetchLeaderboard
             setIsLoading(false);
         };
 
