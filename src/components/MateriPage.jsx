@@ -1,10 +1,11 @@
 import React from 'react';
 
-const SubjectCard = ({ icon, name, href }) => (
+const SubjectCard = ({ icon, name, setStudentPage,topicName  }) => (
   <a
-    href={href}
+  onClick={() => setStudentPage(topicName)}
     className="subject-card fade-in"
     style={{
+      
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
@@ -44,7 +45,7 @@ const SubjectCard = ({ icon, name, href }) => (
   </a>
 );
 
-export default function MateriPage() {
+export default function MateriPage({setStudentPage}) {
   return (
     <div
       style={{
@@ -120,9 +121,9 @@ export default function MateriPage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
           gap: 30
         }}>
-          <SubjectCard icon="🤖" name="Pengenalan AI" href="/page/pengenalan_ai.html" />
-          <SubjectCard icon="📈" name="Machine Learning" href="/page/machine_learning.html" />
-          <SubjectCard icon="🗣️" name="Natural Language Processing" href="/page/nlp.html" />
+          <SubjectCard icon="🤖" name="Pengenalan AI" setStudentPage={setStudentPage} topicName="pengenalan-ai"/>
+          <SubjectCard icon="📈" name="Machine Learning" setStudentPage={setStudentPage} topicName="machine-learning" />
+          <SubjectCard icon="🗣️" name="Natural Language Processing" setStudentPage={setStudentPage} topicName="nlp" />
         </div>
       </section>
 
