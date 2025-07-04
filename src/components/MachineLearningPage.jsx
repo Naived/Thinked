@@ -1,10 +1,13 @@
 // components/MachineLearningPage.jsx
 import React, { useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth'; // Untuk mendapatkan user yang login
+import { getFirestore, doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore'; // Untuk interaksi Firestore
 
 // --- Individual Content Sections (Components) ---
-// Membuat komponen terpisah untuk setiap section akan menjaga kebersihan kode
+// Komponen-komponen ini menerima props onBack, onDone, dan isDone
+// dan menampilkan tombol "Tandai Selesai" secara kondisional.
 
-const DefinisiSection = ({ onBack }) => (
+const DefinisiSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Definisi Machine Learning</h2>
@@ -46,17 +49,25 @@ const DefinisiSection = ({ onBack }) => (
             <ul className="list-disc list-inside space-y-2">
                 <li><strong>Training Data:</strong> Dataset yang digunakan untuk melatih model</li>
                 <li><strong>Features:</strong> Variabel input yang digunakan untuk membuat prediksi</li>
-                <li><strong>Target/Label:</strong> Output yang ingin diprediksi</li>
+                <li><b>Target/Label:</b> Output yang ingin diprediksi</li>
                 <li><strong>Model:</strong> Algoritma yang telah dilatih untuk membuat prediksi</li>
                 <li><strong>Prediction:</strong> Output yang dihasilkan oleh model</li>
                 <li><strong>Overfitting:</strong> Model terlalu spesifik pada training data</li>
                 <li><strong>Underfitting:</strong> Model terlalu sederhana untuk menangkap pola data</li>
             </ul>
         </div>
+        {!isDone('definisi') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('definisi')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const JenisSection = ({ onBack }) => (
+const JenisSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Jenis-jenis Machine Learning</h2>
@@ -174,10 +185,18 @@ const JenisSection = ({ onBack }) => (
             <h3 className="text-2xl font-bold text-slate-800 pt-6">Self-Supervised Learning</h3>
             <p className="text-lg">Model belajar dengan membuat label dari data itu sendiri. Contoh: prediksi kata selanjutnya dalam kalimat (seperti pada model bahasa GPT).</p>
         </div>
+        {!isDone('jenis') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('jenis')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const ProsesSection = ({ onBack }) => (
+const ProsesSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Proses Machine Learning</h2>
@@ -194,10 +213,18 @@ const ProsesSection = ({ onBack }) => (
                 <li><strong>Deployment:</strong> Menerapkan model ke production</li>
             </ol>
         </div>
+        {!isDone('proses') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('proses')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const AlgoritmaSection = ({ onBack }) => (
+const AlgoritmaSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Algoritma Populer</h2>
@@ -220,10 +247,18 @@ const AlgoritmaSection = ({ onBack }) => (
                 <li><strong>DBSCAN:</strong> Density-based clustering</li>
             </ul>
         </div>
+        {!isDone('algoritma') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('algoritma')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const EvaluasiSection = ({ onBack }) => (
+const EvaluasiSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Evaluasi Model</h2>
@@ -244,17 +279,25 @@ const EvaluasiSection = ({ onBack }) => (
                 <li><strong>R-squared:</strong> Proporsi varians yang dijelaskan</li>
             </ul>
         </div>
+        {!isDone('evaluasi') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('evaluasi')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const AplikasiSection = ({ onBack }) => (
+const AplikasiSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Aplikasi Machine Learning</h2>
         <div className="space-y-6 text-slate-700 text-lg leading-relaxed">
             <h3 className="text-2xl font-bold text-slate-800 pt-4">Industri dan Aplikasi</h3>
             <ul className="list-disc list-inside space-y-2">
-                <li><strong>Healthcare:</strong> Diagnosis medis, drug discovery</li>
+                <li><strong>Healthcare:</strong> Diagnosa medis, drug discovery</li>
                 <li><strong>Finance:</strong> Fraud detection, algorithmic trading</li>
                 <li><strong>Technology:</strong> Search engines, recommendation systems</li>
                 <li><strong>Transportation:</strong> Autonomous vehicles, route optimization</li>
@@ -262,10 +305,18 @@ const AplikasiSection = ({ onBack }) => (
                 <li><strong>Entertainment:</strong> Content recommendation, game AI</li>
             </ul>
         </div>
+        {!isDone('aplikasi') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('aplikasi')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
-const MasaDepanSection = ({ onBack }) => (
+const MasaDepanSection = ({ onBack, onDone, isDone }) => (
     <div className="bg-white p-8 rounded-xl shadow-lg animate-fade-in">
         <button onClick={onBack} className="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 mb-8 transition-colors">← Kembali ke Menu</button>
         <h2 className="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-indigo-200 pb-3">Masa Depan Machine Learning</h2>
@@ -279,6 +330,14 @@ const MasaDepanSection = ({ onBack }) => (
                 <li><strong>Federated Learning:</strong> Training tanpa centralized data</li>
             </ul>
         </div>
+        {!isDone('masa-depan') && ( // Tombol Tandai Selesai
+            <button
+                onClick={() => onDone('masa-depan')}
+                className="mt-6 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+                ✅ Tandai Selesai
+            </button>
+        )}
     </div>
 );
 
@@ -301,10 +360,122 @@ const MenuUtama = ({ onSelect }) => (
 // --- Main Machine Learning Page Component ---
 export default function MachineLearningPage() {
     const [activeSection, setActiveSection] = useState('menu'); // Default to menu
+    const [completedSections, setCompletedSections] = useState([]); // State untuk melacak bagian yang selesai
 
-    // Handler untuk tombol kembali
+    // Definisi semua bagian materi Machine Learning
+    const sections = [ 
+        'definisi',
+        'jenis',
+        'proses',
+        'algoritma',
+        'evaluasi',
+        'aplikasi',
+        'masa-depan'
+    ];
+    
+    // Konstanta untuk total bagian dari semua materi
+    const TOTAL_AI_SECTIONS = 7; // Asumsi ada 7 bagian di materi Pengenalan AI
+    const TOTAL_ML_SECTIONS = sections.length; // Ini adalah 7 bagian di materi ML ini
+    const OVERALL_TOTAL_SECTIONS = TOTAL_AI_SECTIONS + TOTAL_ML_SECTIONS; // Total keseluruhan (7 + 7 = 14)
+
+    // Fungsi untuk mengambil progres dari Firestore
+    const fetchProgress = async () => {
+        const user = getAuth().currentUser;
+        if (!user) return; // Jangan fetch jika user tidak login
+
+        const userRef = doc(getFirestore(), 'users', user.uid);
+        try {
+            const docSnap = await getDoc(userRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                // Memuat progres khusus untuk materi ML
+                setCompletedSections(data.ml_material_progress || []); 
+            }
+        } catch (error) {
+            console.error("Gagal mengambil progress ML:", error);
+        }
+    };
+
+    // Fungsi untuk memperbarui progres di Firestore
+    const updateProgress = async (sectionKey) => {
+        const user = getAuth().currentUser;
+        if (!user) {
+            console.warn("User not logged in, cannot update progress.");
+            return;
+        }
+
+        const userRef = doc(getFirestore(), 'users', user.uid);
+        try {
+            // 1. Ambil dokumen user saat ini untuk mendapatkan semua progress materi
+            const docSnap = await getDoc(userRef);
+            let aiProgress = []; // Progres materi AI dari DB
+            let mlProgress = []; // Progres materi ML dari DB
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                aiProgress = data.ai_material_progress || [];
+                mlProgress = data.ml_material_progress || [];
+            }
+
+            // 2. Tambahkan sectionKey yang baru selesai ke progres materi ML yang relevan
+            // Menggunakan Set untuk memastikan setiap sectionKey unik
+            const newMlProgress = [...new Set([...mlProgress, sectionKey])]; 
+            setCompletedSections(newMlProgress); // Perbarui state lokal
+
+            // 3. Hitung total semua bagian yang selesai dari SEMUA materi
+            const allCompletedSectionsKeys = new Set([...aiProgress, ...newMlProgress]); // Kombinasikan kedua progres
+            const totalCompletedCount = allCompletedSectionsKeys.size; // Ambil jumlah uniknya
+
+            // 4. Hitung persentase learningProgress
+            const newLearningProgress = Math.min(100, Math.round((totalCompletedCount / OVERALL_TOTAL_SECTIONS) * 100));
+
+            // 5. Lakukan updateDoc dengan kedua field progres materi ML dan learningProgress global
+            await updateDoc(userRef, {
+                ml_material_progress: newMlProgress, // Update array progres materi ML
+                learningProgress: newLearningProgress // Update progres global
+            });
+            console.log(`Progres ML untuk '${sectionKey}' berhasil disimpan. Progres Global: ${newLearningProgress}%`);
+
+        } catch (error) {
+            console.error("Gagal menyimpan progres ML atau global:", error);
+        }
+    };
+
+    // useEffect untuk memuat progres saat komponen dimount
+    useEffect(() => { 
+        fetchProgress();
+    }, []);
+
     const handleBackToMenu = () => {
         setActiveSection('menu');
+    };
+
+    // Handler untuk menandai bagian selesai dan kembali ke menu
+    const handleDone = (sectionKey) => { 
+        updateProgress(sectionKey); // Panggil fungsi updateProgress
+        setActiveSection('menu');
+    };
+
+    // Render statistik progres
+    const renderProgressStats = () => { 
+        const total = sections.length; // Total bagian di materi ML ini
+        const completed = completedSections.length; // Bagian yang selesai di materi ML ini
+        const percent = Math.round((completed / total) * 100);
+
+        return (
+            <div className="text-center mb-6 text-slate-700">
+                <p className="text-lg">Progress Anda: <strong>{completed}/{total}</strong> materi diselesaikan ({percent}%)</p>
+                <div className="w-full bg-gray-200 rounded-full h-3 mt-2">
+                    <div className="bg-indigo-500 h-3 rounded-full" style={{ width: `${percent}%` }}></div>
+                </div>
+            </div>
+        );
+    };
+
+    // sharedProps untuk diteruskan ke setiap section
+    const sharedProps = { 
+        onBack: handleBackToMenu,
+        onDone: handleDone,
+        isDone: (key) => completedSections.includes(key) // Cek apakah sectionKey sudah ada di completedSections
     };
 
     // useEffect untuk menangani tombol Escape (opsional)
@@ -322,23 +493,21 @@ export default function MachineLearningPage() {
 
     const renderContent = () => {
         switch (activeSection) {
-            case 'definisi':
-                return <DefinisiSection onBack={handleBackToMenu} />;
-            case 'jenis':
-                return <JenisSection onBack={handleBackToMenu} />;
-            case 'proses':
-                return <ProsesSection onBack={handleBackToMenu} />;
-            case 'algoritma':
-                return <AlgoritmaSection onBack={handleBackToMenu} />;
-            case 'evaluasi':
-                return <EvaluasiSection onBack={handleBackToMenu} />;
-            case 'aplikasi':
-                return <AplikasiSection onBack={handleBackToMenu} />;
-            case 'masa-depan':
-                return <MasaDepanSection onBack={handleBackToMenu} />;
+            case 'definisi': return <DefinisiSection {...sharedProps} />;
+            case 'jenis': return <JenisSection {...sharedProps} />;
+            case 'proses': return <ProsesSection {...sharedProps} />;
+            case 'algoritma': return <AlgoritmaSection {...sharedProps} />;
+            case 'evaluasi': return <EvaluasiSection {...sharedProps} />;
+            case 'aplikasi': return <AplikasiSection {...sharedProps} />;
+            case 'masa-depan': return <MasaDepanSection {...sharedProps} />;
             case 'menu':
             default:
-                return <MenuUtama onSelect={setActiveSection} />;
+                return (
+                    <>
+                        {renderProgressStats()} {/* Tampilkan progres di menu utama */}
+                        <MenuUtama onSelect={setActiveSection} />
+                    </>
+                );
         }
     };
 

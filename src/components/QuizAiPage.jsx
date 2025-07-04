@@ -1,38 +1,44 @@
 // components/QuizAiPage.jsx
 import React, { useState, useEffect } from 'react';
-import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
+import { getFirestore, collection, getDocs, query, where , doc, updateDoc, getDoc } from 'firebase/firestore'; // Removed 'increment' as it's not needed with read-modify-write
+import { getAuth } from 'firebase/auth'; // For getting the current user
 
-export default function QuizAiPage({ setStudentPage, db }) {
+export default function QuizAiPage({ setStudentPage, db }) { // db is correctly received as a prop
 
     // --- State Management ---
     const [quizStage, setQuizStage] = useState('levelSelection');
-    const [currentLevel, setCurrentLevel] = useState(''); // Akan menyimpan 'beginner', 'intermediate', 'advanced'
+    const [currentLevel, setCurrentLevel] = useState(''); // Stores 'beginner', 'intermediate', 'advanced'
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [userAnswers, setUserAnswers] = useState([]);
-    const [selectedAnswer, setSelectedAnswer] = useState(null);
-    const [currentQuizQuestions, setCurrentQuizQuestions] = useState([]);
-    const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
-    const [error, setError] = useState(null);
+    const [userAnswers, setUserAnswers] = useState([]); // Stores user's selected options (index)
+    const [selectedAnswer, setSelectedAnswer] = useState(null); // Currently selected option for the active question
+    const [currentQuizQuestions, setCurrentQuizQuestions] = useState([]); // Questions fetched for the current quiz
+    const [isLoadingQuestions, setIsLoadingQuestions] = useState(false); // Loading state for quiz questions
+    const [error, setError] = useState(null); // Error message state
 
-    const [correctCount, setCorrectCount] = useState(0);
-    const [percentageScore, setPercentageScore] = useState(0);
+    const [correctCount, setCorrectCount] = useState(0); // Number of correct answers in the finished quiz
+    const [percentageScore, setPercentageScore] = useState(0); // Percentage score of the finished quiz
 
-    // NEW STATE: Menyimpan jumlah pertanyaan untuk setiap level
+    // State to store the number of questions for each level (for display on level selection cards)
     const [levelQuestionCounts, setLevelQuestionCounts] = useState({});
 
-    // Map internal level codes ('beginner') ke nama level di Firestore ('beginner') dan display name
+    // Map internal level codes to Firestore names and display names
     const levelMap = {
-        'beginner': { firestoreName: 'beginner', displayName: 'Pemula', icon: '🌱' }, // Pastikan ini 'beginner'
+        'beginner': { firestoreName: 'beginner', displayName: 'Pemula', icon: '🌱' },
         'intermediate': { firestoreName: 'intermediate', displayName: 'Menengah', icon: '🎯' },
         'advanced': { firestoreName: 'advanced', displayName: 'Lanjutan', icon: '🚀' }
     };
 
-    // --- Firebase Fetching Logic ---
+    // Constants for total sections across all materials (used for overall learningProgress)
+    const TOTAL_AI_SECTIONS = 7; // Assuming 7 sections in Pengenalan AI material
+    const TOTAL_ML_SECTIONS = 7; // Assuming 7 sections in Machine Learning material
+    const OVERALL_TOTAL_SECTIONS = TOTAL_AI_SECTIONS + TOTAL_ML_SECTIONS; // Total: 14 sections
 
-    // Fungsi untuk mengambil soal kuis berdasarkan level
+    // --- Firebase Data Fetching Logic ---
+
+    // Function to fetch quiz questions based on the selected level
     const fetchQuizQuestions = async (levelCode) => {
         setIsLoadingQuestions(true);
-        setError(null);
+        setError(null); // Clear previous errors
 
         const firestoreLevelName = levelMap[levelCode]?.firestoreName;
         if (!firestoreLevelName) {
@@ -43,62 +49,65 @@ export default function QuizAiPage({ setStudentPage, db }) {
         }
 
         try {
+            // Query Firestore for questions matching topic and level
             const q = query(
                 collection(db, "quizzes"),
-                where("topic", "==", "ai"),
+                where("topic", "==", "artiintel"), // Ensure this matches your Firestore topic field for AI quizzes
                 where("level", "==", firestoreLevelName)
             );
             const querySnapshot = await getDocs(q);
+
             const questionsList = querySnapshot.docs.map(doc => {
                 const data = doc.data();
                 let optionsArray = [];
                 let correctIndex = -1;
 
-                // Menangani format 'option' sebagai array string murni (tanpa "0: A. ")
+                // Handle 'option' field as a pure string array (e.g., from manual input)
                 if (Array.isArray(data.option)) {
-                    optionsArray = data.option.map(opt => opt.trim()); // Hanya trim jika ada spasi
+                    optionsArray = data.option.map(opt => opt.trim());
                 }
-                // Jika Anda juga memiliki format 'options' sebagai objek (dari QuizEditPage.jsx)
+                // Handle 'options' field as an object (e.g., from QuizEditPage)
                 else if (data.options && typeof data.options === 'object') {
                     optionsArray = [data.options.A, data.options.B, data.options.C, data.options.D].filter(Boolean);
                 }
 
-                // Pastikan selalu ada 4 slot opsi (bisa null jika kurang)
+                // Ensure there are always 4 option slots (fill with null if less)
                 while (optionsArray.length < 4) {
                     optionsArray.push(null);
                 }
 
-                // Menangani 'answer' yang hanya berupa huruf ('A', 'B', 'C', 'D')
+                // Handle 'answer' field as a single character ('A', 'B', 'C', 'D')
                 if (data.answer && typeof data.answer === 'string' && data.answer.length === 1) {
                     correctIndex = data.answer.charCodeAt(0) - 'A'.charCodeAt(0);
-                    // Pastikan opsi pada indeks yang benar ada dan tidak null
+                    // Validate if the correct option's index actually exists and is not null
                     if (correctIndex < 0 || correctIndex >= optionsArray.length || optionsArray[correctIndex] === null) {
-                        correctIndex = -1; // Tandai sebagai tidak valid jika opsi tidak ditemukan
+                        correctIndex = -1; // Mark as invalid if the correct option is missing
                     }
                 }
 
-                console.log(`--- Debugging Question ID: ${doc.id} ---`); // Tambahkan ini
-                console.log(`  Raw data.answer:`, data.answer); // Tambahkan ini
-                console.log(`  Parsed optionsArray:`, optionsArray); // Tambahkan ini
-                console.log(`  Calculated correctIndex:`, correctIndex); // Tambahkan ini
-                console.log(`  Options valid count:`, optionsArray.filter(Boolean).length); // Tambahkan ini
-                console.log(`  Passes correct index check (!= -1):`, correctIndex !== -1); // Tambahkan ini
-                console.log(`  Passes options count check (>=3):`, optionsArray.filter(Boolean).length >= 3); // Tambahkan ini
-                console.log(`-------------------------------------`); // Tambahkan ini
+                // Detailed console logs for debugging each question
+                console.log(`--- Debugging Question ID: ${doc.id} ---`);
+                console.log(`  Raw data.answer:`, data.answer);
+                console.log(`  Parsed optionsArray:`, optionsArray);
+                console.log(`  Calculated correctIndex:`, correctIndex);
+                console.log(`  Options valid count:`, optionsArray.filter(Boolean).length);
+                console.log(`  Passes correct index check (!= -1):`, correctIndex !== -1);
+                console.log(`  Passes options count check (>=3):`, optionsArray.filter(Boolean).length >= 3);
+                console.log(`-------------------------------------`);
 
                 return {
                     id: doc.id,
                     question: data.question,
                     options: optionsArray,
-                    correct: correctIndex, // Simpan sebagai indeks (0, 1, 2, 3)
+                    correct: correctIndex, // Stored as 0-indexed (0, 1, 2, 3)
                     explanation: data.explanation || "Tidak ada penjelasan."
                 };
             })
-            // Filter: pastikan ada setidaknya 3 opsi valid dan kunci jawaban teridentifikasi
+            // Filter: Ensure questions have at least 3 valid options and a valid correct answer
             .filter(q => q.options.filter(Boolean).length >= 3 && q.correct !== -1);
 
-            console.log("Jumlah pertanyaan setelah filtering:", questionsList.length); // Ini sudah ada, bagus
-            console.log("Pertanyaan yang akan digunakan:", questionsList); // Ini sudah ada, bagus
+            console.log("Jumlah pertanyaan setelah filtering:", questionsList.length);
+            console.log("Pertanyaan yang akan digunakan:", questionsList);
 
             setCurrentQuizQuestions(questionsList);
 
@@ -110,7 +119,7 @@ export default function QuizAiPage({ setStudentPage, db }) {
         }
     };
 
-    // useEffect untuk memuat jumlah pertanyaan untuk setiap level saat komponen pertama kali dimuat
+    // useEffect to fetch question counts for level selection cards on component mount
     useEffect(() => {
         const fetchAllLevelCounts = async () => {
             if (!db) return;
@@ -121,7 +130,7 @@ export default function QuizAiPage({ setStudentPage, db }) {
                 try {
                     const q = query(
                         collection(db, "quizzes"),
-                        where("topic", "==", "ai"),
+                        where("topic", "==", "artiintel"), // Matches topic in fetchQuizQuestions
                         where("level", "==", firestoreLevelName)
                     );
                     const querySnapshot = await getDocs(q);
@@ -159,105 +168,175 @@ export default function QuizAiPage({ setStudentPage, db }) {
         };
 
         fetchAllLevelCounts();
-    }, [db]); // Dependensi: db
+    }, [db]); // Dependency: db
 
-
-    // useEffect untuk memicu pengambilan data saat level dipilih
-    // useEffect(() => {
-    //     if (currentLevel && db) {
-    //         fetchQuizQuestions(currentLevel);
-    //     }
-    // }, [currentLevel, db]);
-
-    // useEffect untuk pindah stage setelah data pertanyaan dimuat
+    // useEffect to transition quiz stage after questions are loaded
     useEffect(() => {
-        
         console.log('--- useEffect Stage Transition Dipicu ---');
         console.log('currentLevel saat useEffect:', currentLevel);
         console.log('isLoadingQuestions saat useEffect:', isLoadingQuestions);
         console.log('currentQuizQuestions.length saat useEffect:', currentQuizQuestions.length);
         console.log('quizStage saat useEffect:', quizStage);
         console.log('----------------------------------------');
-        if (!isLoadingQuestions && quizStage === 'levelSelection' && currentLevel) {
+
+        // Condition to act:
+        // 1. We are in 'levelSelection' stage
+        // 2. A level has been selected (`currentLevel` is not empty)
+        // 3. Question loading has finished (`isLoadingQuestions` is false)
+        if (quizStage === 'levelSelection' && currentLevel && !isLoadingQuestions) {
             if (currentQuizQuestions.length > 0) {
                 console.log('Kondisi transisi terpenuhi: Mengatur quizStage ke "quizInterface"');
                 setQuizStage('quizInterface');
-                setError(null); // Penting: Bersihkan error jika berhasil
+                setError(null); // Clear any previous error
             } else {
-                // Ini akan terpicu jika fetch selesai tapi tidak ada soal yang ditemukan
+                // This triggers if fetch finished but no questions were found
                 console.log('Kondisi error terpenuhi: Mengatur error "Tidak ada soal..."');
                 setError("Tidak ada soal yang valid ditemukan untuk level ini. Coba level lain atau hubungi admin.");
-                setCurrentLevel(''); // Reset level agar bisa memilih lagi
+                setCurrentLevel(''); // Reset level to allow re-selection
             }
         }
-    }, [currentLevel, isLoadingQuestions, currentQuizQuestions, quizStage]);
-
+    }, [currentLevel, isLoadingQuestions, currentQuizQuestions.length, quizStage]); // Dependencies: Trigger when relevant state changes
 
     // --- Quiz Logic Functions ---
+
+    // Starts a new quiz session for the given level
     const startQuiz = (levelCode) => {
         setCurrentLevel(levelCode);
         setCurrentQuestionIndex(0);
-        setUserAnswers([]);
-        setSelectedAnswer(null);
-        setError(null);
-        setCurrentQuizQuestions([]); // Kosongkan soal yang sudah diambil sebelumnya
-        fetchQuizQuestions(levelCode);
+        setUserAnswers([]); // Reset user's answers
+        setSelectedAnswer(null); // Clear selected answer
+        setError(null); // Clear any errors
+        setCurrentQuizQuestions([]); // Clear previous questions
+        fetchQuizQuestions(levelCode); // Start fetching questions for the selected level
     };
 
+    // Handles selection of an option for the current question
     const selectOption = (optionIndex) => {
         setSelectedAnswer(optionIndex);
     };
 
-    const nextQuestion = () => {
-        if (selectedAnswer !== null) {
-            const updatedAnswers = [...userAnswers];
-            updatedAnswers[currentQuestionIndex] = selectedAnswer;
-            setUserAnswers(updatedAnswers);
+    // Navigates to the next question or finishes the quiz if it's the last question
+    const nextQuestion = async () => {
+        if (selectedAnswer === null) return; // Do nothing if no answer is selected
 
-            if (currentQuestionIndex < currentQuizQuestions.length - 1) {
-                setCurrentQuestionIndex(prevIndex => prevIndex + 1);
-                setSelectedAnswer(null);
-            } else {
-                finishQuiz();
-            }
+        const updatedAnswers = [...userAnswers];
+        updatedAnswers[currentQuestionIndex] = selectedAnswer;
+        setUserAnswers(updatedAnswers); // Update state with current answer
+
+        if (currentQuestionIndex < currentQuizQuestions.length - 1) {
+            setCurrentQuestionIndex(prevIndex => prevIndex + 1); // Move to next question
+            setSelectedAnswer(null); // Clear selected option for the new question
+        } else {
+            // If it's the last question, finish the quiz
+            await finishQuiz(updatedAnswers); // Pass updated answers to finishQuiz
         }
     };
 
+    // Navigates to the previous question
     const previousQuestion = () => {
         if (currentQuestionIndex > 0) {
-            const updatedAnswers = [...userAnswers];
-            if (selectedAnswer !== null) {
-                updatedAnswers[currentQuestionIndex] = selectedAnswer;
-            }
-            setUserAnswers(updatedAnswers);
-
-            setCurrentQuestionIndex(prevIndex => prevIndex - 1);
-            setSelectedAnswer(updatedAnswers[currentQuestionIndex - 1] || null);
+            setCurrentQuestionIndex(prev => prev - 1); // Move to previous question
+            setSelectedAnswer(userAnswers[currentQuestionIndex - 1] ?? null); // Load previous answer if available
         }
     };
 
-    const submitQuiz = () => {
+    // Submits the quiz (usually called on the last question)
+    const submitQuiz = async () => {
+        const updatedAnswers = [...userAnswers]; // Copy current answers
         if (selectedAnswer !== null) {
-            const updatedAnswers = [...userAnswers];
-            updatedAnswers[currentQuestionIndex] = selectedAnswer;
-            setUserAnswers(updatedAnswers);
+            updatedAnswers[currentQuestionIndex] = selectedAnswer; // Store selected answer if any
+        } else {
+            updatedAnswers[currentQuestionIndex] = null; // Store null for unanswered
         }
-        finishQuiz();
+        setUserAnswers(updatedAnswers); // Update state with current answers
+        await finishQuiz(updatedAnswers); // Pass updated answers to finishQuiz and await it
     };
 
-    const finishQuiz = () => {
-        let correct = 0;
+    // Handles the completion of the quiz, calculates score, and updates Firebase
+    const finishQuiz = async (finalAnswers) => {
         const questions = currentQuizQuestions;
-        userAnswers.forEach((answer, index) => {
-            if (answer === questions[index]?.correct) { // Tambahkan nullish coalescing untuk keamanan
-                correct++;
+        let correct = 0;
+
+        // Calculate correct answers
+        finalAnswers.forEach((answer, index) => {
+            const question = questions[index]; // Get the specific question object
+            if (question) {
+                console.log(`  Q${index + 1}: User Answer: ${answer}, Correct Answer: ${question.correct}, Match: ${answer === question.correct}`);
+                if (answer === question.correct) {
+                    correct++;
+                }
+            } else {
+                console.warn(`  Q${index + 1}: Question not found for this index.`);
             }
         });
+
+        // Calculate final percentage score
+        const finalPercentageScore = questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0;
+
+        // Update local UI states for quiz results
         setCorrectCount(correct);
-        setPercentageScore(questions.length > 0 ? Math.round((correct / questions.length) * 100) : 0);
-        setQuizStage('results');
+        setPercentageScore(finalPercentageScore);
+        setQuizStage("results");
+
+        // --- LOGIC FOR CALCULATING AND SAVING DATA TO FIRESTORE ---
+        try {
+            const auth = getAuth();
+            const user = auth.currentUser; // Get the currently logged-in user
+
+            if (!user) {
+                console.warn("⚠️ No logged-in user. Skipping Firestore update.");
+                return;
+            }
+
+            const userRef = doc(db, "users", user.uid); // Reference to the user's document
+
+            // 1. Read the user's current data from Firestore
+            const userDocSnap = await getDoc(userRef);
+
+            if (userDocSnap.exists()) {
+                const userDataFromDb = userDocSnap.data();
+
+                // Get current values, defaulting to 0 or [] if field doesn't exist
+                const currentTotalQuizzes = userDataFromDb.totalQuizzesCompleted || 0;
+                const currentTotalScoreSum = userDataFromDb.TotalScoreSum || 0;
+                let aiMaterialProgress = userDataFromDb.ai_material_progress || []; // Progress from AI material
+                let mlMaterialProgress = userDataFromDb.ml_material_progress || []; // Progress from ML material
+
+                // Calculate new quiz statistics
+                const newTotalQuizzes = currentTotalQuizzes + 1;
+                const newTotalScoreSum = currentTotalScoreSum + finalPercentageScore;
+                // Calculate new average score (handle division by zero)
+                const newAverageScore = newTotalQuizzes > 0 ? Math.round(newTotalScoreSum / newTotalQuizzes) : 0;
+
+                // Calculate new global learning progress
+                // Combine all unique completed section keys from all materials
+                const allCompletedSectionsKeys = new Set([...aiMaterialProgress, ...mlMaterialProgress]);
+                const totalCompletedCount = allCompletedSectionsKeys.size;
+                const newLearningProgress = Math.min(100, Math.round((totalCompletedCount / OVERALL_TOTAL_SECTIONS) * 100));
+
+                // 2. Perform the update operation on the user's document
+                await updateDoc(userRef, {
+                    totalQuizzesCompleted: newTotalQuizzes,
+                    TotalScoreSum: newTotalScoreSum,
+                    learningProgress: newLearningProgress, // Global learning progress percentage
+                    score: newAverageScore, // 'score' field stores the average quiz score (for leaderboard)
+                    // Removed 'averageScore' field as per your database structure
+                    // Removed 'lastQuizAttempted' field as per your database structure
+                });
+
+                console.log("✅ Statistik pengguna berhasil diperbarui di Firestore!");
+
+            } else {
+                console.warn("⚠️ Dokumen pengguna tidak ditemukan untuk UID ini. Cannot update statistics.");
+            }
+
+        } catch (error) {
+            console.error("❌ Firestore write failed:", error);
+            // Optionally, set an error state in the UI for the user
+        }
     };
 
+    // Resets quiz state to restart the quiz from level selection
     const restartQuiz = () => {
         setQuizStage('levelSelection');
         setCurrentLevel('');
@@ -268,11 +347,12 @@ export default function QuizAiPage({ setStudentPage, db }) {
         setError(null);
     };
 
+    // Navigates back to the main quiz topics page
     const backToQuizTopics = () => {
-        setStudentPage('quiz');
+        setStudentPage('quiz'); // Assuming 'quiz' is the page name for QuizTopicsPage
     };
 
-    // --- Conditional Rendering ---
+    // --- Conditional Rendering Logic ---
     const renderContent = () => {
         if (isLoadingQuestions) {
             return (
