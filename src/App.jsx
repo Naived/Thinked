@@ -19,6 +19,7 @@ import StudentNavbar from './components/StudentNavbar';
 import PengenalanAiPage from './components/PengenalanAiPage.jsx';
 import MachineLearningPage from './components/MachineLearningPage.jsx';
 import NaturalLanguageProcessing from './components/NLPPage.jsx';
+import QuizNlpPage from './components/QuizNlppage.jsx';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -105,46 +106,49 @@ export default function App() {
   }
 
   const renderStudentContent = () => {
-      let content;
-      switch(studentPage) {
-          case 'materi':
-            content = <MateriPage setStudentPage={setStudentPage} />;
-              break;
-          case 'pengenalan-ai':
-              content = <PengenalanAiPage />;
-              break;
-            case 'quiz': // Ketika studentPage adalah 'quiz' (dari navbar)
-              content = <QuizTopicsPage setStudentPage={setStudentPage} />; // Render komponen pilihan topik quiz Anda
-              break;
-          // >>> AKHIR TAMBAHAN <<<
-            case 'quiz-ai-intro': // Untuk quiz spesifik Pengenalan AI
-          content = <QuizAiPage setStudentPage={setStudentPage} db={db}/>; // Atau komponen QuizAIPage
-              break;
-            case 'quiz-machine-learning': // <-- Tambahkan case ini
-              content = <QuizMachineLearningPage setStudentPage={setStudentPage} db={db} />; // <-- Dan ini
-              break;
-            case 'machine-learning':
-              content = <MachineLearningPage/>
-              break;
-              case 'nlp':
-              content = <NaturalLanguageProcessing/>;
-              break;
-          case 'dashboard':
-          default:
-              content = <StudentDashboardPage userData={userData} />;
-              break;
-      }
-      return (
-          <StudentLayout 
-              setPage={setStudentPage} 
-              activePage={studentPage} 
-              userData={userData} 
-              handleLogout={handleLogout}
-          >
-              {content}
-          </StudentLayout>
-      );
-  }
+    let content;
+    switch(studentPage) {
+      case 'materi':
+        content = <MateriPage setStudentPage={setStudentPage} />;
+        break;
+      case 'pengenalan-ai':
+        content = <PengenalanAiPage />;
+        break;
+      case 'quiz':
+        content = <QuizTopicsPage setStudentPage={setStudentPage} />;
+        break;
+      case 'quiz-ai-intro':
+        content = <QuizAiPage setStudentPage={setStudentPage} db={db} />;
+        break;
+      case 'quiz-machine-learning':
+        content = <QuizMachineLearningPage setStudentPage={setStudentPage} db={db} />;
+        break;
+      case 'quiz-nlp': // ✅ THIS is what you were missing
+        content = <QuizNlpPage />;
+        break;
+      case 'machine-learning':
+        content = <MachineLearningPage />;
+        break;
+      case 'nlp':
+        content = <NaturalLanguageProcessing />;
+        break;
+      case 'dashboard':
+      default:
+        content = <StudentDashboardPage userData={userData} />;
+        break;
+    }
+  
+    return (
+      <StudentLayout 
+        setPage={setStudentPage} 
+        activePage={studentPage} 
+        userData={userData} 
+        handleLogout={handleLogout}
+      >
+        {content}
+      </StudentLayout>
+    );
+  };
 
   const renderPage = () => {
     if (isLoading) {

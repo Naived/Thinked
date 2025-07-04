@@ -37,7 +37,7 @@ export default function PengenalanAiPage() {
         <>
             {/* Header Section */}
             <section className="bg-indigo-600 text-white text-center py-16 px-4" style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}>
-                <h1 className="text-4xl font-bold">Natural Language Processing</h1>
+                <h1 className="text-4xl font-bold">Natural Language Processing Quiz</h1>
                 <p className="text-lg mt-2 opacity-90">Coming soon...</p>
             </section>
 
@@ -45,7 +45,7 @@ export default function PengenalanAiPage() {
             <section className="py-12 px-4 bg-gray-50">
                 <div className="container mx-auto">
                     {renderContent()}
-                    <button
+                        <button
   onClick={() => window.history.back()}
   className="mt-6 inline-block bg-indigo-500 text-white px-6 py-3 rounded-lg hover:bg-indigo-600 transition"
 >
