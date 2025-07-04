@@ -10,7 +10,7 @@ import AdminDashboardPage from './components/DashboardPage.jsx';
 import TablesPage from './components/TablesPage.jsx';
 import QuizEditPage from './components/QuizEditPage.jsx';
 import QuizTopicsPage from './components/QuizTopicPage.jsx';
-import QuizAIPage from './components/QuizAIPage.jsx';
+import QuizAIPage from './components/QuizAiPage.jsx';
 import QuizMachineLearningPage from './components/QuizMachineLearningPage.jsx'; 
 import ProfilePage from './components/ProfilePage.jsx';
 import StudentDashboardPage from './components/StudentDashboard.jsx';
