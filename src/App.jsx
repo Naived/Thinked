@@ -20,6 +20,7 @@ import PengenalanAiPage from './components/PengenalanAiPage.jsx';
 import MachineLearningPage from './components/MachineLearningPage.jsx';
 import NaturalLanguageProcessing from './components/NLPPage.jsx';
 import QuizNlpPage from './components/QuizNlppage.jsx';
+import AboutUsPage from './components/Aboutus.jsx';
 
 // --- Firebase Configuration ---
 const firebaseConfig = {
@@ -131,6 +132,9 @@ export default function App() {
         break;
       case 'nlp':
         content = <NaturalLanguageProcessing />;
+        break;
+      case 'tentang':
+        content = <AboutUsPage />;
         break;
       case 'dashboard':
       default:
