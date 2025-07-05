@@ -129,7 +129,7 @@ export default function TablesPage() {
 
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
-        <h6 className="text-slate-700 !text-3xl font-bold">User Table</h6>
+        <h6 className="text-slate-700 text-3xl font-bold ml-[20px]">User Table</h6>
         <button
           onClick={() => setShowModal(true)}
           className="bg-blue-600 text-white px-4 py-2 rounded"
